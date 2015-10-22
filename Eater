@@ -1,0 +1,97 @@
+;Eater
+;version 0.6R
+
+#type 1
+#hardware
+    processor 10
+    energy 600 155
+    eater 0.2
+    engine 0.1
+    food-sensor 5 1
+    robot-sensor 5 1
+	constructor 1.1
+;	solar-cells 0.1
+#code
+#vector food_future_position
+#vector me_future_position
+#vector random_destination
+;initilise
+;robot-sensor can see friendlies
+1 robot-sensor-sees-friends!
+;generate first random destination
+0 world-width random 0 world-height random random_destination!
+;main loop
+;keep eating or look for food, eat it if it's unoccupied, otherwise wander
+do
+;perform main loop if not gestating
+constructor-remaining 0 >= if
+
+    ;check if not already eating
+    eaten not if
+    ;look for food
+    ;periodically fire the food sensor, based on speed (ensure it is always a positive integer)
+    20 speed - round square sqrt periodic-food-sensor drop
+    ;get new results (or sync processing timing)
+    sync
+        ;check if food found
+        food-found if
+        ;found food, refocus robot sensor and scan (based on 2 ticks worth of extra movement)
+        food-position food-velocity food-sensor-time 1 + vs* v+ food_future_position!
+        position velocity v+ me_future_position!
+        food_future_position me_future_position dist robot-sensor-focus-distance!
+        food_future_position me_future_position v- angle robot-sensor-focus-direction!
+        fire-robot-sensor
+        sync
+            ;found food, focus scanned food area for robots, check for nearby robots
+            robot-found if
+                ;found food, robot found, check if robot not near to food
+                food_future_position food-velocity v+ robot-position 0.5 in-range nif
+                    ;found food, robot found, nearest robot to this food is more than 0.3 range away
+                    food_future_position seek-location
+					;found food, robot found, robot too close to food, wander
+					else
+						;check if near random_destination
+						position random_destination 8 in-range if
+						;reached random_destination, generate a new one
+						0 world-width random 0 world-height random random_destination!
+						then
+					random_destination seek-location
+                then
+            else
+            ;found food, robot not found nearby  
+            food_future_position seek-location
+            then
+        else
+        ;no food found, wander
+            ;check if near random_destination
+            position random_destination 8 in-range if
+            ;reached random_destination, generate a new one
+            0 world-width random 0 world-height random random_destination!
+            then
+        random_destination seek-location
+        then
+else
+;already eating, keep eating
+sync
+;update likely relative food position
+food_future_position food-velocity v+ velocity v- food_future_position!
+;keep the engine tracking the likely food position
+food_future_position seek-location
+then
+
+then
+
+	energy max-energy >= if
+		2 constructor-type!
+		10 1 balance-type
+		constructor-max-rate constructor-rate!
+	then
+	
+	constructor-remaining 0 <= if
+	0 constructor-rate!
+	then
+
+;loop main loop	
+forever
+
+#end
