@@ -1,0 +1,364 @@
+New classes Jake would like as part of parasite. Some of these could be merged with each other or existing cells
+
+Tugboats
+Wouldn't it be good if we could cut  the engine out of everything that doesn't need one and use a specialised cell to tug things like turrets and possibly eaters around. It would surely lead to greater efficiency per cell
+
+Destructors
+some things are going to be too aggressive to syphon. They must be killed instead of farmed.
+
+Shipyard
+After thinking on it, a shipyard is a good idea. Perhaps all turrets could be shipyards?
+My thinking is that we should use turrets as birthing houses and if we do that, why do we feed them.
+Missiles
+for some enemies missiles are better than blasters. Parasite should spawn missile microbes in such circumstances and send them towards last known enemies coordinates in packs that fly in a rotating circle formation! Packs increase in size and decrease in frequency if a kill is not reported back.
+
+Brain
+Maybe our strategic thinking should be moved into a brain with defaults set just in case the brain gets killed
+
+
+#side Forceful Parasite
+#author Jake and also Riki
+;version 0.3
+#color FD4
+#type Forceful Parasite
+#hardware
+
+;basics
+processor         10
+constructor         1
+engine            0.7
+
+;energy
+energy         1200    10
+;solar-cells        
+eater            1.1
+;syphon        
+enemy-syphon     8     2
+
+;sensors
+robot-sensor         10     1
+food-sensor         10     1
+;shot-sensor        
+    
+;defences
+armor            52
+;repair rate        
+;shield            
+
+;weapons
+;blaster    
+;grenades        
+;force field        
+;bomb            
+
+
+#code
+;for storing our random destination
+#vector random-dest
+;for storing our target destination
+#vector target-dest
+;for storing our targets moving position
+#vector current-enemy-position
+;for storing our foods moving position
+#vector current-food-position
+
+;initialize
+;randomly picking starting destination and storing
+;**this may need to be cleaned up later, may not need to store it
+0 world-height random 0 world-width random random-dest!
+
+;main loop
+do
+
+    30 periodic-robot-sensor drop
+    150 periodic-food-sensor drop
+sync
+    ;check for robots
+    robot-found if
+        ;robots found
+        robot-position target-dest!
+            ;check distance to target destination
+            robot-position position enemy-syphon-range in-range if
+            ;found robot, robot within range, syphon it
+            ;set syphon direction
+            robot-direction enemy-syphon-direction!
+            ;set syphon distance
+            robot-distance    enemy-syphon-distance!
+            ;turn syphon on, full power
+            enemy-syphon-max-rate enemy-syphon-rate!
+            ;found robot, robot out of range, move to it
+            else
+            ;determine the target robot position next tick
+            target-dest robot-velocity v+ target-dest!
+            ;determine the angle and position for force-field and fire it
+            robot-position seek-location
+            then
+    ;no robots found, check for food
+    else
+        ;checking if food found
+        food-found if
+            ;food found, go to food
+            food-position seek-location
+        ;no robots, no food, wander
+        else
+            ;check if already near our random destination
+            random-dest position 10 in-range if
+                ;no robots, no food, near random destination, new random destination
+                0 world-height random 0 world-width random random-dest!
+            then
+            ;have new random destination if needed, now go there
+            random-dest seek-location
+        then
+    then
+forever
+#end
+
+
+
+robots priorities
+Reproduce
+Siphon enemies
+paralyze enemies
+if no enemies are available feed on mana
+
+coding priorities
+Moving with force fields to food enemies
+siphoning from enemy
+reproductive cycle
+long term wish list:
+keep map of explored areas
+create zero, zero based on spawn
+for every x logic cycles record coordinates which are stored for Y cycles before deletion
+if coordinates within z range
+if multiple coordinates occur calculate the most remote direction by averaging coordinate and moving away from that point
+move away from coordinates
+
+
+
+
+keep map of enemies that are too powerful
+
+
+
+
+
+
+
+determine if in famine
+change behaviour
+Jake’s description
+
+goal 1
+create a robot that can move using a force field
+
+goal 2
+create a robot that can siphon energy from algae
+
+goal 3 reproduce
+
+Philosophy
+
+Should we be civilised (create and defend a base) or nomadic (seek the greenest pastures)?
+
+Jake argues that static defences are illogical given that 
+there will always greener pastures in uninhabited lands because there is no bonus for cultivating an area
+nomadic style suits with the infrastructure of being hunter gatherer
+
+Pack hunter or Rogue hunter
+Like with real world wolf packs there will be an optimal pack number based of food scarcity and enemy strength, The best size for a wolf pack is four with larger packs needing to be particularly aggressive. Larger packs form in environments with bigger game. A pack of four wolves can survive purely through hunting game while larger packs often cannibalize smaller wolf packs
+
+Late game strategy
+if lots of fighting increase pack size for greater combat effectiveness
+if insufficient food decrease pack size for greater gathering efficiency
+
+
+Cellular accelerator
+
+
+
+EatFood concept
+
+#type EatFood
+#hardware
+    processor 25
+    energy 1050 50
+    eater 5
+    engine 0.1
+    food-sensor 10 1
+    robot-sensor 10 1
+#code
+#vector food_future_position
+#vector me_future_position
+#vector random_destination
+;initilise
+;robot-sensor can see friendlies
+1 robot-sensor-sees-friends!
+;generate first random destination
+0 world-width random 0 world-height random random_destination!
+;main loop
+;keep eating or look for food, eat it if it's unoccupied, otherwise wander
+do
+    ;check if not already eating
+    eaten not if
+    ;look for food
+    ;periodically fire the food sensor, based on speed (ensure it is always a positive integer)
+    20 speed - round square sqrt periodic-food-sensor drop
+    ;get new results (or sync processing timing)
+    sync
+        ;check if food found
+        food-found if
+        ;found food, refocus robot sensor and scan (based on 2 ticks worth of extra movement)
+        food-position food-velocity food-sensor-time 1 + vs* v+ food_future_position!
+        position velocity v+ me_future_position!
+        food_future_position me_future_position dist robot-sensor-focus-distance!
+        food_future_position me_future_position v- angle robot-sensor-focus-direction!
+        fire-robot-sensor
+        sync
+            ;found food, focus scanned food area for robots, check for nearby robots
+            robot-found if
+                ;found food, robot found, check if robot not near to food
+                food_future_position food-velocity v+ robot-position robot-velocity v+ 5 in-range nif
+                    ;found food, robot found, nearest robot to this food at least 5 range away
+                    food_future_position seek-location
+                then
+            else
+            ;found food, robot not found nearby   are you there riki?
+            food_future_position seek-location
+            then
+        else
+        ;no food found, wander
+            ;check if near random_destination
+            position random_destination 8 in-range if
+            ;reached random_destination, generate a new one
+            0 world-width random 0 world-height random random_destination!
+            then
+        random_destination seek-location
+        then
+else
+;already eating, keep eating
+sync
+;update likely relative food position
+food_future_position food-velocity v+ velocity v- food_future_position!
+;keep the engine tracking the likely food position
+food_future_position seek-location
+then
+;loop main loop
+forever
+
+ADDING IN MIlitary MEN
+Turrets > eaters > siphons > Turrets
+
+
+#type Turrets
+#color F0E
+#hardware
+  solar-cells .30
+  armor 250
+  processor 10
+  energy 500 0
+  grenades 20 27 24
+  robot-sensor 27 2
+  repair-rate 0.1
+#code
+#var charged 0
+#var contact 0
+#var life
+#start
+max-armor life!
+do
+    energy 15 > if
+        charged time 100 grenades-reload-time + - robot-sensor-time > or if
+            grenades-reload-time periodic-robot-sensor if
+                robot-found if
+                    1 charged! ;if there is an enemy robot, exterminate.
+                    time contact!
+                    robot-distance 2 >= if
+                        robot-position robot-velocity lead-grenade
+                    else
+                        next-robot if
+                            robot-distance 2 >= if
+                                robot-position robot-velocity lead-grenade
+                            then
+                        then
+                    then
+                then
+            then
+        then
+    then
+    energy 400 > if
+        1 charged!
+    else
+        energy 50 < time contact - 50 > and if ;if there is low energy, and at least 50 rounds since the last enemy contact -> charge.
+            0 charged!
+        then
+    then
+   sync; sync to start at check, not halfway
+   armor life < if ;shout if hit
+    armor life!
+    position 2 1 send
+   then
+   armor max-armor < if
+     max-repair-rate repair-rate!
+     armor life!
+   else
+     0 repair-rate!
+     armor life!
+   then
+forever
+
+#end
+
+
+
+
+;eat function
+;check if already eating, locate a food, check if the food is free, move to it.  Returns a positive boolean if successfully moving to food
+;requires food sensor, robot sensor
+;stack diagram -- boolean
+eat:
+    ;check if already eating (or finished). check if amount eaten equals amount the eater could eat
+    eaten if
+    ;keep eating, return 1 for eat success
+    1
+    ;not actively eating, check if food available
+    else
+    ;fire the sensors
+    fire-food-sensor
+    ;ensure the robot sensor can see friends
+    1 robot-sensor-sees-friends
+    fire-robot-sensor
+    ;get the sensor results
+    sync
+        ;not eating.  chcek if food found
+        food-found if
+        ;refocus robot sensor onto the food
+        food-distance robot-sensor-focus-distance!
+        food-direction robot-sensor-focus-direction!
+        ;fire robot sensor
+        fire-robot-sensor
+        ;get the results
+        sync
+            ;not eating, food found.  check for robots
+            robot-found if
+                ;not eating, food found, robot found.  check if robot is eating food
+                robot-position food-position robot-radius in-range if
+                ;not eating, food found, robot found, other robot already eating the food.  return 0 for eat failure
+                0
+                ;not eating, food found, robot found, food clear.  move to the food & return 1 for eat success
+                food-position seek-location 1
+                ;end check if other robot is already eating the food
+                then
+            ;not eating, food found, no robots found.  move to the food & return 1 for eat success
+            else
+            food-position seek-location 1
+            ;end check for robot loop
+            then
+        ;not eating, food not found.  return 0 for eat failure
+        else
+        0
+        ;end check for food loop
+        then
+    ;end check eating loop
+    then
+;end eat function, returning boolean for success or failure
+
