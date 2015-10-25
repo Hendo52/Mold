@@ -1,0 +1,239 @@
+#side pattern eater
+#color B21
+#date Oct 2015
+#Author Jake & Riki
+;version 1
+
+;shared code block
+#code
+;shared variables
+;patrol phase 2 loop condition
+#var loop2
+;patrol phase 3 loop condition
+#var loop3
+;our position on the patrol path before we wander off (for food)
+#vector patrol-path-position
+
+
+;shared functions
+
+
+;locate food and eat it
+food-ping:
+;check if already eating, locate a food, move to it
+;requires food sensor
+;stack diagram -- 
+	;check if food available
+	;fire the sensors
+	fire-food-sensor
+	;get the sensor results
+	sync
+		;check if food found
+		food-found if
+		do
+		food-position seek-location
+		eaten ceiling until-loop
+			;continue eating if still eating
+			do 
+			food-position seek-location
+				;check if enough energy to reproduce
+				energy 500 > if
+				1 constructor-type!
+				do
+				constructor-max-rate constructor-rate!
+				constructor-remaining 0 <= until-loop
+				0 constructor-rate!
+				then
+			eaten ceiling while-loop
+		then
+;end food-ping function
+return
+
+
+;return to with 3 distance of the patrol path
+patrol-path-return:
+do
+patrol-path-position seek-location
+position velocity v+ patrol-path-position 0.3 in-range until-loop
+return
+
+
+#type eater
+#hardware
+    processor 10
+    energy 600 155
+    eater 0.2
+    engine 0.1
+    food-sensor 5 1
+	constructor 1.1
+
+#code
+#var random-start-direction
+;initialize
+position -40 40 random-int dup v+ patrol-path-position!
+1 4 random-int random-start-direction!
+random-start-direction 2 = if second-square& jump then
+random-start-direction 3 = if third-square& jump then
+random-start-direction 4 = if forth-square& jump then
+
+;main loop
+do
+
+food-ping^
+patrol-path-return^
+
+first-square:
+
+patrol-path-position 0 2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position -2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position -2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 -2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 -2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 10 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+second-square:
+
+patrol-path-position 2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position -2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position -2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 -2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 -2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 -10 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+third-square:
+
+patrol-path-position 0 -2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 -2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position -2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position -2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position -10 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+forth-square:
+
+patrol-path-position -2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position -2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 -2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 -2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 2 0 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 2 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+patrol-path-position 0 10 v+ patrol-path-position!
+food-ping^
+patrol-path-return^
+
+forever
+
+#end
